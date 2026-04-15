@@ -1,1 +1,1 @@
-"# Espace de travail de Aittouda (DevOps & Edge)"  "# Espace de travail de Maidoumi (Data Science & IA)"  "# Espace de travail de Lalaoui (Backend & Database)"  "# Espace de travail de BenSidi (Frontend React)" 
+"# Espace de travail de BenSidi (Frontend React)" 
