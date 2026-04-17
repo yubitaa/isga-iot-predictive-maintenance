@@ -1,0 +1,285 @@
+import React, { useState, useEffect } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import { AlertTriangle, Activity, Clock, Zap, Settings, Bell, TrendingUp, Server } from 'lucide-react';
+
+function App() {
+  const [data, setData] = useState([]);
+  const [alert, setAlert] = useState(null);
+  const [stats, setStats] = useState({
+    avgVibration: 0,
+    maxVibration: 0,
+    totalReadings: 0,
+    uptime: '99.9%'
+  });
+
+  useEffect(() => {
+    const ws = new WebSocket('ws://localhost:8080');
+
+    ws.onmessage = (event) => {
+      const incomingData = JSON.parse(event.data);
+
+      const newDataPoint = {
+        time: new Date().toLocaleTimeString('fr-FR', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        vibration: parseFloat(incomingData.vibration),
+        status: incomingData.status
+      };
+
+      setData(prevData => {
+        const newData = [...prevData.slice(-19), newDataPoint];
+
+        // Calculate stats
+        const vibrations = newData.map(d => d.vibration);
+        setStats({
+          avgVibration: (vibrations.reduce((a, b) => a + b, 0) / vibrations.length).toFixed(2),
+          maxVibration: Math.max(...vibrations).toFixed(2),
+          totalReadings: newData.length,
+          uptime: '99.9%'
+        });
+
+        return newData;
+      });
+
+      if (incomingData.status === 'CRITICAL') {
+        setAlert(incomingData);
+        sendSmsAlert(incomingData);
+      } else {
+        setAlert(null);
+      }
+    };
+
+    return () => ws.close();
+  }, []);
+
+  const sendSmsAlert = (info) => {
+    console.log(`📱 [TWILIO API] SMS Envoyé ! Alerte sur la machine ${info["machine id"]} - Vibration: ${info.vibration}`);
+  };
+
+  const getStatusColor = (status) => {
+    if (status === 'CRITICAL') return '#ef4444';
+    if (status === 'WARNING') return '#f59e0b';
+    return '#10b981';
+  };
+
+  const currentStatus = alert ? 'CRITICAL' : data.length > 0 ? 'NORMAL' : 'LOADING';
+  const statusColor = getStatusColor(currentStatus);
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
+      fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
+      padding: '24px',
+      color: '#e2e8f0'
+    }}>
+      {/* Header */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '24px',
+        padding: '0 8px'
+      }}>
+        <div>
+          <h1 style={{
+            fontSize: '28px',
+            fontWeight: '700',
+            margin: '0 0 4px 0',
+            background: 'linear-gradient(90deg, #60a5fa, #a78bfa)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}>
+            Dashboard Maintenance Prédictive
+          </h1>
+          <p style={{ margin: 0, color: '#94a3b8', fontSize: '14px' }}>
+            Surveillance IoT en temps réel • Machine #{alert ? alert["machine id"] : 'M-001'}
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '8px 16px',
+            backgroundColor: 'rgba(15, 23, 42, 0.6)',
+            borderRadius: '20px',
+            border: '1px solid rgba(148, 163, 184, 0.2)'
+          }}>
+            <div style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              backgroundColor: statusColor,
+              boxShadow: `0 0 12px ${statusColor}`,
+              animation: currentStatus === 'CRITICAL' ? 'pulse 1s infinite' : 'none'
+            }} />
+            <span style={{ fontSize: '12px', fontWeight: '600', color: statusColor }}>
+              {currentStatus}
+            </span>
+          </div>
+
+          <button style={{
+            padding: '10px',
+            backgroundColor: 'rgba(15, 23, 42, 0.6)',
+            border: '1px solid rgba(148, 163, 184, 0.2)',
+            borderRadius: '12px',
+            color: '#e2e8f0',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <Bell size={20} />
+          </button>
+
+          <button style={{
+            padding: '10px',
+            backgroundColor: 'rgba(15, 23, 42, 0.6)',
+            border: '1px solid rgba(148, 163, 184, 0.2)',
+            borderRadius: '12px',
+            color: '#e2e8f0',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <Settings size={20} />
+          </button>
+        </div>
+      </div>
+
+      {/* Critical Alert Banner */}
+      {alert && (
+        <div style={{
+          background: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)',
+          borderRadius: '16px',
+          padding: '20px 24px',
+          marginBottom: '24px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px',
+          boxShadow: '0 20px 40px rgba(220, 38, 38, 0.3)',
+          animation: 'slideIn 0.3s ease-out',
+          border: '1px solid rgba(255, 255, 255, 0.1)'
+        }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '12px',
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <AlertTriangle size={28} color="white" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <h3 style={{ margin: '0 0 4px 0', color: 'white', fontSize: '18px', fontWeight: '700' }}>
+              Alerte Critique Détectée
+            </h3>
+            <p style={{ margin: 0, color: 'rgba(255,255,255,0.9)', fontSize: '14px' }}>
+              Machine <strong>{alert["machine id"]}</strong> • Vibration anormale: <strong>{alert.vibration}</strong> • SMS envoyé
+            </p>
+          </div>
+          <div style={{
+            padding: '8px 16px',
+            backgroundColor: 'rgba(255,255,255,0.2)',
+            borderRadius: '20px',
+            fontSize: '12px',
+            fontWeight: '600',
+            color: 'white'
+          }}>
+            {new Date().toLocaleTimeString('fr-FR')}
+          </div>
+        </div>
+      )}
+
+      {/* Stats Grid */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(4, 1fr)',
+        gap: '16px',
+        marginBottom: '24px'
+      }}>
+        {[
+          { icon: Activity, label: 'Vibration Moyenne', value: stats.avgVibration, unit: 'mm/s', color: '#60a5fa' },
+          { icon: TrendingUp, label: 'Vibration Max', value: stats.maxVibration, unit: 'mm/s', color: '#a78bfa' },
+          { icon: Server, label: 'Points de Données', value: stats.totalReadings, unit: '', color: '#34d399' },
+          { icon: Zap, label: 'Uptime Système', value: stats.uptime, unit: '', color: '#fbbf24' }
+        ].map((stat, idx) => (
+          <div key={idx} style={{
+            background: 'rgba(30, 41, 59, 0.6)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: '16px',
+            padding: '20px',
+            border: '1px solid rgba(148, 163, 184, 0.1)',
+            transition: 'transform 0.2s, box-shadow 0.2s',
+            cursor: 'pointer'
+          }} onMouseEnter={e => {
+            e.currentTarget.style.transform = 'translateY(-4px)';
+            e.currentTarget.style.boxShadow = '0 20px 40px rgba(0,0,0,0.3)';
+          }} onMouseLeave={e => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = 'none';
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '10px',
+                backgroundColor: `${stat.color}20`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <stat.icon size={20} color={stat.color} />
+              </div>
+              <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: '500' }}>{stat.label}</span>
+            </div>
+            <div style={{ fontSize: '28px', fontWeight: '700', color: '#f1f5f9' }}>
+              {stat.value}<span style={{ fontSize: '14px', color: '#64748b', marginLeft: '4px' }}>{stat.unit}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Main Chart Section */}
+      <div style={{
+        background: 'rgba(30, 41, 59, 0.6)',
+        backdropFilter: 'blur(10px)',
+        borderRadius: '20px',
+        padding: '24px',
+        border: '1px solid rgba(148, 163, 184, 0.1)',
+        boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '20px'
+        }}>
+          <div>
+            <h2 style={{
+              margin: '0 0 4px 0',
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#f1f5f9'
+            }}>
+              Analyse des Vibrations
+            </h2>
+            <p style={{ margin: 0, color: '#64748b', fontSize: '13px' }}>
+              Données en temps réel • Dernières 20 mesures
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <span style={{
+              padding: '6px 12px',
+              backgroundColor: 'rgba(96, 165, 250, 0.15)',
+              color: '#60a5fa',
+              borderRadius: '20px',
+              fontSize: '12px',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'cente<response clipped><NOTE>Result is longer than **10000 characters**, will be **truncated**.</NOTE>
