@@ -13,8 +13,7 @@ function App() {
   });
 
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8080');
-
+const ws = new WebSocket('ws://localhost:8000/ws/alerts');
     ws.onmessage = (event) => {
       const incomingData = JSON.parse(event.data);
       
@@ -365,6 +364,7 @@ function App() {
         color: '#475569',
         fontSize: '12px'
       }}>
+        <span>ws://localhost:8000/ws/alerts</span>
         <span>Dernière mise à jour: {data.length > 0 ? data[data.length - 1].time : '--:--:--'}</span>
       </div>
 
