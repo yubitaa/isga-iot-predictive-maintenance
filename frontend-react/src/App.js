@@ -13,7 +13,8 @@ function App() {
   });
 
   useEffect(() => {
-const ws = new WebSocket('ws://localhost:8000/ws/alerts');
+   const ws = new WebSocket('ws://localhost:8000/ws/alerts');
+
     ws.onmessage = (event) => {
       const incomingData = JSON.parse(event.data);
       
