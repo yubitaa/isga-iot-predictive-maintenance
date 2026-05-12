@@ -45,7 +45,7 @@ try:
         print(f"📡 Données envoyées: {json_payload}")
         
         # Wait 1 second before sending the next one
-        time.sleep(1)
+        time.sleep(10)
         
 except KeyboardInterrupt:
     print("\n Simulateur arrêté par l'utilisateur.")

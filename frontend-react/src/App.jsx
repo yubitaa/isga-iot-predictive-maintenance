@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import emailjs from '@emailjs/browser';
+import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { AlertTriangle, Activity, Zap, Settings as SettingsIcon, Bell, Thermometer, Gauge, Clock, BrainCircuit, Mail, Database, Radio, Save, ArrowLeft } from 'lucide-react';
@@ -105,7 +106,7 @@ function SettingsPage() {
           </div>
           <div style={{ padding: '12px', backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
             <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#10b981', boxShadow: '0 0 10px #10b981' }}></div>
-            <span style={{ color: '#10b981', fontWeight: '600', fontSize: '14px' }}>PostgreSQL : Connecté (Port 5432)</span>
+            <span style={{ color: '#10b981', fontWeight: '600', fontSize: '14px' }}>PostgreSQL : Connecté (Port 5433)</span>
           </div>
           <div>
             <label style={labelStyle}>Politique de Rétention des Données</label>
@@ -130,10 +131,10 @@ function SettingsPage() {
           <div>
             <label style={labelStyle}>Fréquence d'échantillonnage</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <input type="range" min="1" max="10" defaultValue="1" style={{ flex: 1, cursor: 'pointer' }} />
-              <span style={{ color: '#f8fafc', fontWeight: 'bold', minWidth: '80px', textAlign: 'right' }}>1 sec</span>
+              <input type="range" min="1" max="10" defaultValue="10" style={{ flex: 1, cursor: 'pointer' }} />
+              <span style={{ color: '#f8fafc', fontWeight: 'bold', minWidth: '80px', textAlign: 'right' }}>10 sec</span>
             </div>
-            <p style={{ fontSize: '12px', color: '#64748b', marginTop: '8px' }}>1 donnée par seconde envoyée au modèle IA.</p>
+            <p style={{ fontSize: '12px', color: '#64748b', marginTop: '8px' }}>1 donnée toutes les 10 secondes envoyée au modèle IA.</p>
           </div>
         </div>
 
@@ -148,7 +149,6 @@ function SettingsPage() {
     </div>
   );
 }
-
 // ==========================================
 // COMPOSANT : LISTE DES NOTIFICATIONS
 // ==========================================
@@ -156,35 +156,38 @@ function NotificationsList() {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const mockData = [
-    { "temperature": 53.4, "machine_id": "M-01", "id": 35, "status": "CRITICAL", "vibration": 2.7, "pressure": 1.3, "timestamp": "2026-05-12T12:28:58.706430" },
-    { "temperature": 60.5, "machine_id": "M-01", "id": 44, "status": "NORMAL", "vibration": 1.2, "pressure": 1.1, "timestamp": "2026-05-12T12:29:07.719258" },
-    { "temperature": 51.8, "machine_id": "M-01", "id": 41, "status": "CRITICAL", "vibration": 3.3, "pressure": 1.4, "timestamp": "2026-05-12T12:29:04.716530" },
-    { "temperature": 65.1, "machine_id": "M-02", "id": 52, "status": "CRITICAL", "vibration": 4.1, "pressure": 1.8, "timestamp": "2026-05-12T12:40:22.500000" }
-  ];
-
   useEffect(() => {
-    setTimeout(() => {
-      const criticalAlerts = mockData.filter(item => item.status === "CRITICAL");
-      const sortedAlerts = criticalAlerts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-      setAlerts(sortedAlerts);
-      setLoading(false);
-    }, 500);
+    // We fetch the real data from your FastAPI backend
+    fetch('http://localhost:8000/history')
+      .then(response => response.json())
+      .then(data => {
+        // Filter out normal status, we only want the red alerts
+        const criticalAlerts = data.filter(item => item.status === "CRITICAL");
+        // Sort them so the newest one is always at the top
+        const sortedAlerts = criticalAlerts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        setAlerts(sortedAlerts);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error("❌ Erreur de récupération des alertes:", error);
+        setLoading(false);
+      });
   }, []);
 
   const formatDate = (isoString) => {
+    if (!isoString) return "Date inconnue";
     return new Date(isoString).toLocaleString('fr-FR', {
       day: '2-digit', month: '2-digit', year: 'numeric',
       hour: '2-digit', minute: '2-digit', second: '2-digit'
     });
   };
 
-  if (loading) return <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}><Activity size={32} style={{ animation: 'spin 2s linear infinite', margin: '0 auto' }} /><p>Chargement...</p></div>;
+  if (loading) return <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}><Activity size={32} style={{ animation: 'spin 2s linear infinite', margin: '0 auto' }} /><p>Chargement de la base de données...</p></div>;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '20px' }}>
       {alerts.length === 0 ? (
-        <p style={{ textAlign: 'center', color: '#94a3b8' }}>Aucune alerte critique enregistrée.</p>
+        <p style={{ textAlign: 'center', color: '#94a3b8' }}>Aucune alerte critique enregistrée dans la base de données.</p>
       ) : (
         alerts.map((alert) => (
           <div key={alert.id} style={{ backgroundColor: 'rgba(220, 38, 38, 0.05)', borderLeft: '4px solid #ef4444', borderTop: '1px solid rgba(239, 68, 68, 0.2)', borderRight: '1px solid rgba(239, 68, 68, 0.2)', borderBottom: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '0 12px 12px 0', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
@@ -206,7 +209,6 @@ function NotificationsList() {
     </div>
   );
 }
-
 // ==========================================
 // COMPOSANT : DASHBOARD
 // ==========================================
@@ -214,6 +216,7 @@ function Dashboard() {
   const [data, setData] = useState([]);
   const [alertInfo, setAlertInfo] = useState(null);
   const [stats, setStats] = useState({ avgVibration: 0, maxVibration: 0, totalReadings: 0, uptime: '99.9%' });
+  const lastEmailSent = useRef(0); // Garde en mémoire l'heure du dernier email
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -244,6 +247,33 @@ function Dashboard() {
 
       if (incomingData.status === 'CRITICAL') {
         setAlertInfo(incomingData);
+        
+        const now = Date.now();
+        const COOLDOWN = 60000; // 60 secondes (60 000 millisecondes)
+        
+        // Si 60 secondes se sont écoulées depuis le dernier mail, on envoie !
+        if (now - lastEmailSent.current > COOLDOWN) {
+            lastEmailSent.current = now; // On met à jour le chrono
+            console.log("🚨 Envoi du mail d'alerte en cours...");
+
+            emailjs.send(
+                process.env.REACT_APP_EMAILJS_SERVICE_ID,
+                process.env.REACT_APP_EMAILJS_TEMPLATE_ID,
+                {
+                    machine_id: incomingData.machine_id || incomingData["machine id"], 
+                    vibration: incomingData.vibration,
+                    temperature: incomingData.temperature,
+                    pressure: incomingData.pressure
+                },
+                process.env.REACT_APP_EMAILJS_PUBLIC_KEY
+            )
+            .then((result) => {
+                console.log("✅ Email envoyé avec succès !", result.text);
+            })
+            .catch((error) => {
+                console.error("❌ Erreur EmailJS :", error);
+            });
+        }
       } else {
         setAlertInfo(null);
       }

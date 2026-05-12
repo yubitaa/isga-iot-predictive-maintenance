@@ -66,10 +66,14 @@ def on_message(client, userdata, msg):
         db.add(record)
         db.commit()
         
+        # <-- LA CORRECTION EST ICI : On envoie toutes les données au Frontend
         alert = {
             "machine_id": data["machine_id"],
             "status": status,
             "vibration": data["vibration"],
+            "temperature": data["temperature"],
+            "pressure": data["pressure"],
+            "timestamp": datetime.utcnow().isoformat(),
             "message": f"Statut machine: {status}"
         }
         
