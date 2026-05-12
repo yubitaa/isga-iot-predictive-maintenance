@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-route
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { AlertTriangle, Activity, Zap, Settings, Bell, Thermometer, Gauge, Clock } from 'lucide-react';
 
+<<<<<<< HEAD
 // ==========================================
 // COMPOSANT : LISTE DES NOTIFICATIONS (MOCK DATA)
 // ==========================================
@@ -86,6 +87,21 @@ function Dashboard() {
   useEffect(() => {
     // ⚠️ LE JOUR DE L'INTÉGRATION : Remplace 'ws://localhost:8080' par 'ws://localhost:8000/ws/alerts'
     const ws = new WebSocket('ws://localhost:8080'); 
+=======
+function App() {
+  const [data, setData] = useState([]);
+  const [alertInfo, setAlertInfo] = useState(null);
+  const [stats, setStats] = useState({
+    avgVibration: 0,
+    maxVibration: 0,
+    totalReadings: 0,
+    uptime: '99.9%'
+  });
+
+  useEffect(() => {
+    // FIX 1: Pointing to YOUR actual backend WebSocket route and port
+    const ws = new WebSocket('ws://localhost:8000/ws/alerts');
+>>>>>>> 80391e5bfe13316578f7dbaba9ff6d9a5a2f9747
 
     ws.onmessage = (event) => {
       const incomingData = JSON.parse(event.data);
@@ -121,10 +137,17 @@ function Dashboard() {
     return () => ws.close();
   }, []);
 
+<<<<<<< HEAD
   const sendEmailAlert = async (info) => {
     const serviceID = 'service_n4zrqjt';
     const templateID = 'template_l32f2hd';
     const publicKey = 'FgUhUSGl0nRF3djYD';
+=======
+  const sendSmsAlert = (info) => {
+    // FIX 2: Corrected to machine_id
+    console.log(`📱 [TWILIO API] SMS Envoyé ! Alerte sur la machine ${info.machine_id} - Vibration: ${info.vibration}`);
+  };
+>>>>>>> 80391e5bfe13316578f7dbaba9ff6d9a5a2f9747
 
     try {
       const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
@@ -150,8 +173,26 @@ function Dashboard() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
+<<<<<<< HEAD
           <h1 style={{ fontSize: '28px', fontWeight: '700', margin: 0, background: 'linear-gradient(90deg, #60a5fa, #a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Predictive Maintenance IoT</h1>
           <p style={{ margin: 0, color: '#94a3b8', fontSize: '14px' }}>Machine: {alertInfo ? alertInfo.machine_id : (data.length > 0 ? data[0].machine_id : 'En attente...')}</p>
+=======
+          <h1 style={{
+            fontSize: '28px',
+            fontWeight: '700',
+            margin: '0 0 4px 0',
+            background: 'linear-gradient(90deg, #60a5fa, #a78bfa)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}>
+            Dashboard Maintenance Prédictive
+          </h1>
+          <p style={{ margin: 0, color: '#94a3b8', fontSize: '14px' }}>
+            {/* FIX 3: Corrected to machine_id */}
+            Surveillance IoT en temps réel • Machine {alertInfo ? alertInfo.machine_id : 'M-01'}
+          </p>
+>>>>>>> 80391e5bfe13316578f7dbaba9ff6d9a5a2f9747
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', backgroundColor: 'rgba(15, 23, 42, 0.6)', borderRadius: '20px', border: '1px solid rgba(148, 163, 184, 0.2)' }}>
@@ -164,11 +205,55 @@ function Dashboard() {
       </div>
 
       {alertInfo && (
+<<<<<<< HEAD
         <div style={{ background: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)', borderRadius: '16px', padding: '20px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
           <AlertTriangle size={28} color="white" />
           <div>
             <h3 style={{ margin: 0, color: 'white' }}>Alerte Critique Détectée</h3>
             <p style={{ margin: 0, color: 'rgba(255,255,255,0.9)' }}>Vibration: {alertInfo.vibration} mm/s | E-mail envoyé</p>
+=======
+        <div style={{
+          background: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)',
+          borderRadius: '16px',
+          padding: '20px 24px',
+          marginBottom: '24px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px',
+          boxShadow: '0 20px 40px rgba(220, 38, 38, 0.3)',
+          animation: 'slideIn 0.3s ease-out',
+          border: '1px solid rgba(255, 255, 255, 0.1)'
+        }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '12px',
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <AlertTriangle size={28} color="white" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <h3 style={{ margin: '0 0 4px 0', color: 'white', fontSize: '18px', fontWeight: '700' }}>
+              Alerte Critique Détectée
+            </h3>
+            <p style={{ margin: 0, color: 'rgba(255,255,255,0.9)', fontSize: '14px' }}>
+              {/* FIX 4: Corrected to machine_id */}
+              Machine <strong>{alertInfo.machine_id}</strong> • Vibration anormale: <strong>{alertInfo.vibration}</strong> • SMS envoyé
+            </p>
+          </div>
+          <div style={{
+            padding: '8px 16px',
+            backgroundColor: 'rgba(255,255,255,0.2)',
+            borderRadius: '20px',
+            fontSize: '12px',
+            fontWeight: '600',
+            color: 'white'
+          }}>
+            {new Date().toLocaleTimeString('fr-FR')}
+>>>>>>> 80391e5bfe13316578f7dbaba9ff6d9a5a2f9747
           </div>
         </div>
       )}
