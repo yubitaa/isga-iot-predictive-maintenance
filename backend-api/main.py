@@ -1,4 +1,5 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
+from fastapi.middleware.cors import CORSMiddleware  # <-- IMPORT CORS AJOUTÉ ICI
 from sqlalchemy.orm import Session
 import asyncio
 import json
@@ -11,6 +12,15 @@ from ai_service import predict_status
 # Crée les tables dans PostgreSQL automatiquement
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
+
+# <-- BLOC CORS AJOUTÉ ICI POUR DÉBLOQUER LE FRONTEND REACT -->
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Autorise le Frontend à se connecter
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Correction du bug asyncio pour MQTT
 try:
