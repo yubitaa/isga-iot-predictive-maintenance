@@ -4,7 +4,7 @@ import { AlertTriangle, Activity, Clock, Zap, Settings, Bell, TrendingUp, Server
 
 function App() {
   const [data, setData] = useState([]);
-  const [alertInfo, setAlertInfo] = useState(null); // Sminaha alertInfo bach matkheletch m3a fonction alert() dyal navigateur
+  const [alertInfo, setAlertInfo] = useState(null);
   const [stats, setStats] = useState({
     avgVibration: 0,
     maxVibration: 0,
@@ -13,7 +13,8 @@ function App() {
   });
 
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8080');
+    // FIX 1: Pointing to YOUR actual backend WebSocket route and port
+    const ws = new WebSocket('ws://localhost:8000/ws/alerts');
 
     ws.onmessage = (event) => {
       const incomingData = JSON.parse(event.data);
@@ -51,7 +52,8 @@ function App() {
   }, []);
 
   const sendSmsAlert = (info) => {
-    console.log(`📱 [TWILIO API] SMS Envoyé ! Alerte sur la machine ${info["machine id"]} - Vibration: ${info.vibration}`);
+    // FIX 2: Corrected to machine_id
+    console.log(`📱 [TWILIO API] SMS Envoyé ! Alerte sur la machine ${info.machine_id} - Vibration: ${info.vibration}`);
   };
 
   const getStatusColor = (status) => {
@@ -92,7 +94,8 @@ function App() {
             Dashboard Maintenance Prédictive
           </h1>
           <p style={{ margin: 0, color: '#94a3b8', fontSize: '14px' }}>
-            Surveillance IoT en temps réel • Machine {alertInfo ? alertInfo["machine id"] : 'M-001'}
+            {/* FIX 3: Corrected to machine_id */}
+            Surveillance IoT en temps réel • Machine {alertInfo ? alertInfo.machine_id : 'M-01'}
           </p>
         </div>
         
@@ -185,7 +188,8 @@ function App() {
               Alerte Critique Détectée
             </h3>
             <p style={{ margin: 0, color: 'rgba(255,255,255,0.9)', fontSize: '14px' }}>
-              Machine <strong>{alertInfo["machine id"]}</strong> • Vibration anormale: <strong>{alertInfo.vibration}</strong> • SMS envoyé
+              {/* FIX 4: Corrected to machine_id */}
+              Machine <strong>{alertInfo.machine_id}</strong> • Vibration anormale: <strong>{alertInfo.vibration}</strong> • SMS envoyé
             </p>
           </div>
           <div style={{
